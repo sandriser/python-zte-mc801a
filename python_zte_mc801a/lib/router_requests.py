@@ -1,4 +1,5 @@
 import requests
+import urllib3
 import hashlib
 import codecs
 from retry import retry
@@ -12,6 +13,8 @@ try:
 except AttributeError:
     # no pyopenssl support used / needed / available
     pass
+
+requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL:@SECLEVEL=1'
 
 log = logging.getLogger("rich")
 
