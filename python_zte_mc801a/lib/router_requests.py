@@ -26,9 +26,9 @@ def get_auth_cookies(router_ip: str, user_password: str) -> dict:
 
     # Request the current LD
     r_ld = requests.get(
-        f"http://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=LD",
+        f"https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=LD",
         cookies={"stok": ""},
-        headers={"referer": f"http://{router_ip}/"},
+        headers={"referer": f"https://{router_ip}/"},
     )
 
     # The password is hashed twice
@@ -42,9 +42,9 @@ def get_auth_cookies(router_ip: str, user_password: str) -> dict:
 
     # Login request
     r_login = requests.get(
-        f"http://{router_ip}/goform/goform_set_cmd_process?isTest=false&goformId=LOGIN&password={pwd}",
+        f"https://{router_ip}/goform/goform_set_cmd_process?isTest=false&goformId=LOGIN&password={pwd}",
         cookies={"stok": ""},
-        headers={"referer": f"http://{router_ip}/"},
+        headers={"referer": f"https://{router_ip}/"},
     )
 
     if (not "result" in r_login.json().keys()) or (r_login.json()["result"] != "0"):
@@ -65,9 +65,9 @@ def get_signal_data(router_ip: str, auth_cookies: dict) -> dict:
     """
 
     r_data = requests.get(
-        f'http://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd={",".join(ALL_DATA_FIELDS)}&multi_data=1',
+        f'https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd={",".join(ALL_DATA_FIELDS)}&multi_data=1',
         cookies=auth_cookies,
-        headers={f"referer": f"http://{router_ip}/"},
+        headers={f"referer": f"https://{router_ip}/"},
     )
 
     return r_data.json()
@@ -85,9 +85,9 @@ def get_latest_sms_messages(router_ip, auth_cookies, n=3) -> list:
         list: Dictionaries of messages
     """
     r_data = requests.get(
-        f"http://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=sms_data_total&page=0&data_per_page=500&mem_store=1&tags=10&order_by=order+by+id+desc",
+        f"https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=sms_data_total&page=0&data_per_page=500&mem_store=1&tags=10&order_by=order+by+id+desc",
         cookies=auth_cookies,
-        headers={f"referer": f"http://{router_ip}/"},
+        headers={f"referer": f"https://{router_ip}/"},
     )
 
     json_data = r_data.json()
@@ -133,7 +133,7 @@ def set_5g_band(
     }
 
     r = requests.post(
-        f"http://{router_ip}/goform/goform_set_cmd_process",
+        f"https://{router_ip}/goform/goform_set_cmd_process",
         data=request_data,
         cookies=auth_cookies,
         headers=headers,
