@@ -6,6 +6,13 @@ from python_zte_mc801a.lib.data_processing import get_ad_value
 from python_zte_mc801a.lib.constants import ALL_DATA_FIELDS
 import logging
 
+requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+try:
+    requests.packages.urllib3.contrib.pyopenssl.DEFAULT_SSL_CIPHER_LIST += 'HIGH:!DH:!aNULL'
+except AttributeError:
+    # no pyopenssl support used / needed / available
+    pass
+
 log = logging.getLogger("rich")
 
 
@@ -29,6 +36,7 @@ def get_auth_cookies(router_ip: str, user_password: str) -> dict:
         f"https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=LD",
         cookies={"stok": ""},
         headers={"referer": f"https://{router_ip}/"},
+        verify=False,
     )
 
     # The password is hashed twice
@@ -45,6 +53,7 @@ def get_auth_cookies(router_ip: str, user_password: str) -> dict:
         f"https://{router_ip}/goform/goform_set_cmd_process?isTest=false&goformId=LOGIN&password={pwd}",
         cookies={"stok": ""},
         headers={"referer": f"https://{router_ip}/"},
+        verify=False,
     )
 
     if (not "result" in r_login.json().keys()) or (r_login.json()["result"] != "0"):
@@ -68,6 +77,7 @@ def get_signal_data(router_ip: str, auth_cookies: dict) -> dict:
         f'https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd={",".join(ALL_DATA_FIELDS)}&multi_data=1',
         cookies=auth_cookies,
         headers={f"referer": f"https://{router_ip}/"},
+        verify=False,
     )
 
     return r_data.json()
@@ -88,6 +98,7 @@ def get_latest_sms_messages(router_ip, auth_cookies, n=3) -> list:
         f"https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=sms_data_total&page=0&data_per_page=500&mem_store=1&tags=10&order_by=order+by+id+desc",
         cookies=auth_cookies,
         headers={f"referer": f"https://{router_ip}/"},
+        verify=False,
     )
 
     json_data = r_data.json()
