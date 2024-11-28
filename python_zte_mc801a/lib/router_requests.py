@@ -7,7 +7,7 @@ from python_zte_mc801a.lib.data_processing import get_ad_value
 from python_zte_mc801a.lib.constants import ALL_DATA_FIELDS
 import logging
 
-import SSL
+import ssl
 
 
 class CustomHttpAdapter (requests.adapters.HTTPAdapter):
