@@ -6,6 +6,7 @@ from retry import retry
 from python_zte_mc801a.lib.data_processing import get_ad_value
 from python_zte_mc801a.lib.constants import ALL_DATA_FIELDS
 import logging
+import json
 
 import ssl
 
@@ -101,7 +102,7 @@ def get_signal_data(router_ip: str, auth_cookies: dict) -> dict:
         verify=False,
     )
 
-    return r_data.json()
+    return json.loads(r_data)
 
 
 def get_latest_sms_messages(router_ip, auth_cookies, n=3) -> list:
