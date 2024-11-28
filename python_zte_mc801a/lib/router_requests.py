@@ -7,14 +7,30 @@ from python_zte_mc801a.lib.data_processing import get_ad_value
 from python_zte_mc801a.lib.constants import ALL_DATA_FIELDS
 import logging
 
-requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
-try:
-    requests.packages.urllib3.contrib.pyopenssl.DEFAULT_SSL_CIPHER_LIST += 'HIGH:!DH:!aNULL'
-except AttributeError:
-    # no pyopenssl support used / needed / available
-    pass
+import SSL
 
-requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL:@SECLEVEL=1'
+
+class CustomHttpAdapter (requests.adapters.HTTPAdapter):
+    # "Transport adapter" that allows us to use custom ssl_context.
+
+    def __init__(self, ssl_context=None, **kwargs):
+        self.ssl_context = ssl_context
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = urllib3.poolmanager.PoolManager(
+            num_pools=connections, maxsize=maxsize,
+            block=block, ssl_context=self.ssl_context)
+
+
+def get_legacy_session():
+    ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+    session = requests.session()
+    session.mount('https://', CustomHttpAdapter(ctx))
+    return session
+
+legacy_requests = get_legacy_session()
 
 log = logging.getLogger("rich")
 
@@ -35,7 +51,7 @@ def get_auth_cookies(router_ip: str, user_password: str) -> dict:
     """
 
     # Request the current LD
-    r_ld = requests.get(
+    r_ld = legacy_requests.get(
         f"https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=LD",
         cookies={"stok": ""},
         headers={"referer": f"https://{router_ip}/"},
@@ -52,7 +68,7 @@ def get_auth_cookies(router_ip: str, user_password: str) -> dict:
     pwd = m2.hexdigest().upper()
 
     # Login request
-    r_login = requests.get(
+    r_login = legacy_requests.get(
         f"https://{router_ip}/goform/goform_set_cmd_process?isTest=false&goformId=LOGIN&password={pwd}",
         cookies={"stok": ""},
         headers={"referer": f"https://{router_ip}/"},
@@ -76,7 +92,7 @@ def get_signal_data(router_ip: str, auth_cookies: dict) -> dict:
         dict: Signal data dictionary (unprocessed)
     """
 
-    r_data = requests.get(
+    r_data = legacy_requests.get(
         f'https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd={",".join(ALL_DATA_FIELDS)}&multi_data=1',
         cookies=auth_cookies,
         headers={f"referer": f"https://{router_ip}/"},
@@ -97,7 +113,7 @@ def get_latest_sms_messages(router_ip, auth_cookies, n=3) -> list:
     Returns:
         list: Dictionaries of messages
     """
-    r_data = requests.get(
+    r_data = legacy_requests.get(
         f"https://{router_ip}/goform/goform_get_cmd_process?isTest=false&cmd=sms_data_total&page=0&data_per_page=500&mem_store=1&tags=10&order_by=order+by+id+desc",
         cookies=auth_cookies,
         headers={f"referer": f"https://{router_ip}/"},
@@ -146,7 +162,7 @@ def set_5g_band(
         "AD": ad,
     }
 
-    r = requests.post(
+    r = legacy_requests.post(
         f"https://{router_ip}/goform/goform_set_cmd_process",
         data=request_data,
         cookies=auth_cookies,
